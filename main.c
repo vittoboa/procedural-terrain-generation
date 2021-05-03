@@ -5,6 +5,14 @@
 // OpenGL global variables
 static unsigned int window_width = 1280, window_height = 720;
 
+// OpenGL window resize routine
+void resize(int new_width, int new_height)
+{
+    glViewport(0, 0, new_width, new_height);
+    window_width  = new_width;
+    window_height = new_height;
+}
+
 int main(int argc, char* argv[])
 {
     glutInit(&argc, argv);
@@ -19,6 +27,7 @@ int main(int argc, char* argv[])
     glutInitWindowSize(window_width, window_height);
     glutInitWindowPosition(0, 0);
     glutCreateWindow("Infinite Procedural Terrain Generator");
+    glutReshapeFunc(resize);
 
     glewInit();
 
