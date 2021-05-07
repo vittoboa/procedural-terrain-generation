@@ -13,6 +13,26 @@ void resize(int new_width, int new_height)
     window_height = new_height;
 }
 
+void display(void)
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // swap frame buffers
+    glutSwapBuffers();
+}
+
+void init(void)
+{
+    // set background color
+    glClearColor(0.53, 0.81, 0.92, 1.0f);
+
+    // allow removal of hidden faces
+    glEnable(GL_CULL_FACE);
+
+    // add depth
+    glEnable(GL_DEPTH_TEST);
+}
+
 int main(int argc, char* argv[])
 {
     glutInit(&argc, argv);
@@ -24,13 +44,16 @@ int main(int argc, char* argv[])
     glutInitContextFlags(GLUT_FORWARD_COMPATIBLE);
 
     // create window
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
     glutInitWindowSize(window_width, window_height);
     glutInitWindowPosition(0, 0);
     glutCreateWindow("Infinite Procedural Terrain Generator");
     glutReshapeFunc(resize);
+    glutDisplayFunc(display);
 
     glewInit();
 
+    init();
     glutMainLoop();
 
     return 0;
