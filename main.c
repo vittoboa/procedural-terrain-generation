@@ -2,6 +2,24 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
+// application specific includes
+#include "light.h"
+
+// light properties
+static const Light light0 =
+{
+    (vec4){0.1, 0.1, 0.1, 1.0},
+    (vec4){0.9, 0.9, 0.9, 1.0},
+    (vec4){0.5, 0.5, 0.5, 1.0},
+    (vec4){10.0, 40.0, 10.0, 1.0}
+};
+
+// global ambient
+static const vec4 global_ambient = (vec4)
+{
+    0.2, 0.2, 0.2, 1.0
+};
+
 // OpenGL global variables
 static unsigned int window_width = 1280, window_height = 720;
 
