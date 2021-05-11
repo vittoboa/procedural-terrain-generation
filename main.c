@@ -49,6 +49,20 @@ void init(void)
 
     // add depth
     glEnable(GL_DEPTH_TEST);
+
+    // create shader program executable
+    const GLuint program_id = glCreateProgram();
+    glLinkProgram(program_id);
+    glUseProgram(program_id);
+
+    // obtain light property uniform locations and set values
+    glUniform4fv(glGetUniformLocation(program_id, "light0.ambient_colors"),  1, &light0.ambient_colors[0]);
+    glUniform4fv(glGetUniformLocation(program_id, "light0.diffuse_colors"),  1, &light0.diffuse_colors[0]);
+    glUniform4fv(glGetUniformLocation(program_id, "light0.specular_colors"), 1, &light0.specular_colors[0]);
+    glUniform4fv(glGetUniformLocation(program_id, "light0.coords"),          1, &light0.coords[0]);
+
+    // obtain global ambient uniform location and set value
+    glUniform4fv(glGetUniformLocation(program_id, "global_ambient"), 1, &global_ambient[0]);
 }
 
 int main(int argc, char* argv[])
