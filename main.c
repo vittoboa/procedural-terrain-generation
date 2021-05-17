@@ -1,9 +1,13 @@
 // standard includes
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <time.h>
 
 // application specific includes
 #include "light.h"
+
+// globals
+#define NUM_DIFFERENT_MAPS 5000
 
 // light properties
 static const Light light0 =
@@ -21,6 +25,7 @@ static const vec4 global_ambient = (vec4)
 };
 
 // OpenGL global variables
+int seed;
 static unsigned int window_width = 1280, window_height = 720;
 
 // OpenGL window resize routine
@@ -84,6 +89,9 @@ int main(int argc, char* argv[])
     glutDisplayFunc(display);
 
     glewInit();
+
+    srand(time(NULL));
+    seed = rand() % NUM_DIFFERENT_MAPS;
 
     init();
     glutMainLoop();
