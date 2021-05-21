@@ -65,3 +65,27 @@ static void fill_terrain_vertices(const int matrix_start_x, const int matrix_sta
        }
     }
 }
+
+// fill the terrain array of indices
+static void fill_terrain_indices(unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X])
+{
+    int current_pos;
+    for (unsigned int j = 0; j < TERRAIN_NUM_VERTICES_SIDE - 1; ++j) {
+        current_pos = j * TERRAIN_NUM_VERTICES_SIDE;
+
+        // compute the indices of all vertices, two triangles at the time
+        for (unsigned int i = 0; i < TERRAIN_NUM_INDICES_X; i += 6) {
+            // bottom left triangle face
+            terrain_indices[j][i    ] = current_pos + TERRAIN_NUM_VERTICES_SIDE;      // vertex below
+            terrain_indices[j][i + 1] = current_pos;                                  // vertex
+            terrain_indices[j][i + 2] = current_pos + TERRAIN_NUM_VERTICES_SIDE + 1;  // vertex below to the right
+
+            // top right triangle face
+            terrain_indices[j][i + 3] = current_pos;                                  // vertex
+            terrain_indices[j][i + 4] = current_pos + 1;                              // vertex to the right
+            terrain_indices[j][i + 5] = current_pos + TERRAIN_NUM_VERTICES_SIDE + 1;  // vertex below to the right
+
+            ++current_pos;  // new current starting position every two triangles
+        }
+    }
+}
