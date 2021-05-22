@@ -89,3 +89,51 @@ static void fill_terrain_indices(unsigned int terrain_indices[TERRAIN_NUM_VERTIC
         }
     }
 }
+
+// fill the terrain array of normals
+static void fill_terrain_normals(const int matrix_start_x, const int matrix_start_z, const int matrix_end_x, const int matrix_end_z,
+                                 unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X],
+                                 Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
+{
+    // convert from number of squares to number of indices
+    const int matrix_start_x_indices = matrix_start_x * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
+    const int matrix_end_x_indices   = matrix_end_x   * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
+
+    int v1_index, v2_index, v3_index;
+    Vertex v1, v2, v3;
+    vec3s edge1, edge2, normal;
+
+    // compute the normals of all vertices, one triangle at the time
+    for (int j = matrix_start_z; j < matrix_end_z - 1; ++j) {
+        for (int i = matrix_start_x_indices; i < matrix_end_x_indices; ++i) {
+            // get the indices of the triangle
+            v1_index = terrain_indices[j][i];
+            v2_index = terrain_indices[j][i + 1];
+            v3_index = terrain_indices[j][i + 2];
+
+            // get the vertices of the triangle
+            v1 = terrain_vertices[v1_index];
+            v2 = terrain_vertices[v2_index];
+            v3 = terrain_vertices[v3_index];
+
+            // get the vectors of two edges of the triangle
+            glm_vec3_sub(v2.coords.raw, v1.coords.raw, edge1.raw);
+            glm_vec3_sub(v3.coords.raw, v1.coords.raw, edge2.raw);
+
+            // compute the normal
+            glm_vec3_cross(edge1.raw, edge2.raw, normal.raw);
+
+            // update the normal for all vertices
+            glm_vec3_add(normal.raw, v1.normal.raw, terrain_vertices[v1_index].normal.raw);
+            glm_vec3_add(normal.raw, v2.normal.raw, terrain_vertices[v2_index].normal.raw);
+            glm_vec3_add(normal.raw, v3.normal.raw, terrain_vertices[v3_index].normal.raw);
+        }
+    }
+
+    // normalize the vertices normals
+    for (int j = matrix_start_z; j < matrix_end_z; ++j) {
+        for (int i = matrix_start_x; i < matrix_end_x; ++i) {
+            glm_normalize(terrain_vertices[i].normal.raw);
+        }
+    }
+}
