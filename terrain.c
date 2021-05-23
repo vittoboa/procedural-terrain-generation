@@ -145,3 +145,11 @@ static void fill_terrain_counts(int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1
         terrain_counts[i] = TERRAIN_NUM_INDICES_X;
     }
 }
+
+// fill the terrain array of offsets
+static void fill_terrain_offsets(void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1])
+{
+    for (int i = 0; i < TERRAIN_NUM_VERTICES_SIDE - 1; ++i) {
+        terrain_offsets[i] = (GLvoid *) (TERRAIN_NUM_INDICES_X * i * sizeof(unsigned int));
+    }
+}
