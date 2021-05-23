@@ -137,3 +137,11 @@ static void fill_terrain_normals(const int matrix_start_x, const int matrix_star
         }
     }
 }
+
+// fill the terrain array of counts
+static void fill_terrain_counts(int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1])
+{
+    for (int i = 0; i < TERRAIN_NUM_VERTICES_SIDE - 1; ++i) {
+        terrain_counts[i] = TERRAIN_NUM_INDICES_X;
+    }
+}
