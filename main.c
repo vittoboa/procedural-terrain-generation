@@ -4,6 +4,7 @@
 #include <time.h>
 
 // application specific includes
+#include "terrain.h"
 #include "light.h"
 
 // globals
@@ -23,6 +24,12 @@ static const vec4 global_ambient = (vec4)
 {
     0.2, 0.2, 0.2, 1.0
 };
+
+// terrain data
+static Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE];
+static unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X];
+static int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1];
+static void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1];
 
 // OpenGL global variables
 int seed;
@@ -59,6 +66,9 @@ void init(void)
     const GLuint program_id = glCreateProgram();
     glLinkProgram(program_id);
     glUseProgram(program_id);
+
+    // initialize terrain
+    init_terrain(terrain_vertices, terrain_indices, terrain_counts, terrain_offsets);
 
     // obtain light property uniform locations and set values
     glUniform4fv(glGetUniformLocation(program_id, "light0.ambient_colors"),  1, &light0.ambient_colors[0]);

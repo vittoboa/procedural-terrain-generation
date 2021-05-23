@@ -22,4 +22,9 @@ typedef struct {
     const float height;
 } TerrainType;
 
+void init_terrain(Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE],
+                  unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X],
+                  int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1],
+                  void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1]);
+
 #endif //PROCEDURAL_TERRAIN_GENERATION_TERRAIN_H

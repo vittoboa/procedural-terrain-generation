@@ -1,4 +1,5 @@
 #include <cglm/cglm.h>
+#include <GL/glew.h>
 
 #include "terrain.h"
 #include "perlin.h"
@@ -152,4 +153,17 @@ static void fill_terrain_offsets(void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE
     for (int i = 0; i < TERRAIN_NUM_VERTICES_SIDE - 1; ++i) {
         terrain_offsets[i] = (GLvoid *) (TERRAIN_NUM_INDICES_X * i * sizeof(unsigned int));
     }
+}
+
+// procedurally generate terrain
+void init_terrain(Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE],
+                  unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X],
+                  int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1],
+                  void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1])
+{
+    fill_terrain_vertices(0, 0, TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE, terrain_vertices);
+    fill_terrain_indices(terrain_indices);
+    fill_terrain_normals(0, 0, TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE, terrain_indices, terrain_vertices); // needs to always be after filling terrain vertices and indices
+    fill_terrain_counts(terrain_counts);
+    fill_terrain_offsets(terrain_offsets);
 }
