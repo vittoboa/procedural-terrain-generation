@@ -1,6 +1,7 @@
 // standard includes
 #include <GL/glew.h>
 #include <GL/freeglut.h>
+#include <cglm/cglm.h>
 #include <time.h>
 
 // application specific includes
@@ -9,6 +10,7 @@
 
 // globals
 #define NUM_DIFFERENT_MAPS 5000
+#define MAX_VIEW_DISTANCE  400
 
 // light properties
 static const Light light0 =
@@ -30,6 +32,8 @@ static Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_
 static unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X];
 static int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1];
 static void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1];
+
+static mat4 projection_matrix = GLM_MAT4_IDENTITY_INIT;
 
 // OpenGL global variables
 int seed;
@@ -69,6 +73,14 @@ void init(void)
 
     // initialize terrain
     init_terrain(terrain_vertices, terrain_indices, terrain_counts, terrain_offsets);
+
+    glm_perspective(glm_rad(50.0f), (float)window_width / (float)window_height, 1.0f, MAX_VIEW_DISTANCE, projection_matrix);
+
+    // obtain matrices locations
+    const GLint projection_matrix_location = glGetUniformLocation(program_id, "projection_matrix");
+
+    // obtain uniform locations and set values
+    glUniformMatrix4fv(projection_matrix_location, 1, GL_FALSE, (GLfloat *) projection_matrix);
 
     // obtain light property uniform locations and set values
     glUniform4fv(glGetUniformLocation(program_id, "light0.ambient_colors"),  1, &light0.ambient_colors[0]);
