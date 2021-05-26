@@ -33,11 +33,13 @@ static unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_I
 static int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1];
 static void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1];
 
+static mat4 model_view_matrix = GLM_MAT4_IDENTITY_INIT;
 static mat4 projection_matrix = GLM_MAT4_IDENTITY_INIT;
 
 // OpenGL global variables
 int seed;
 static unsigned int window_width = 1280, window_height = 720;
+static GLint model_view_matrix_location;
 
 // OpenGL window resize routine
 void resize(int new_width, int new_height)
@@ -78,6 +80,7 @@ void init(void)
 
     // obtain matrices locations
     const GLint projection_matrix_location = glGetUniformLocation(program_id, "projection_matrix");
+    model_view_matrix_location = glGetUniformLocation(program_id, "model_view_matrix");
 
     // obtain uniform locations and set values
     glUniformMatrix4fv(projection_matrix_location, 1, GL_FALSE, (GLfloat *) projection_matrix);
