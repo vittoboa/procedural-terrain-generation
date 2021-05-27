@@ -75,8 +75,10 @@ void init(void)
 
     // create shader program executable
     const GLuint program_id = glCreateProgram();
-    const GLuint vertex_shader_id = setShader("vertex", "vertexShader.glsl");
+    const GLuint vertex_shader_id   = setShader("vertex",   "vertexShader.glsl");
+    const GLuint fragment_shader_id = setShader("fragment", "fragmentShader.glsl");
     glAttachShader(program_id, vertex_shader_id);
+    glAttachShader(program_id, fragment_shader_id);
     glLinkProgram(program_id);
     glUseProgram(program_id);
 
