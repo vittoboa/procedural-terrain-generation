@@ -6,6 +6,7 @@
 
 // application specific includes
 #include "terrain.h"
+#include "shader.h"
 #include "light.h"
 
 // globals
@@ -60,6 +61,9 @@ void display(void)
 
 void init(void)
 {
+    // VBO ids
+    enum buffer {TERRAIN_VERTICES, TERRAIN_INDICES};
+
     // set background color
     glClearColor(0.53, 0.81, 0.92, 1.0f);
 
@@ -71,11 +75,37 @@ void init(void)
 
     // create shader program executable
     const GLuint program_id = glCreateProgram();
+    const GLuint vertex_shader_id = setShader("vertex", "vertexShader.glsl");
+    glAttachShader(program_id, vertex_shader_id);
     glLinkProgram(program_id);
     glUseProgram(program_id);
 
     // initialize terrain
     init_terrain(terrain_vertices, terrain_indices, terrain_counts, terrain_offsets);
+
+    // create VAO and VBOs
+    GLuint buffer[2], vao;
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(2, buffer);
+
+    // bind terrain data with vertex shader
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, buffer[TERRAIN_VERTICES]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(terrain_vertices), terrain_vertices, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[TERRAIN_INDICES]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(terrain_indices), terrain_indices, GL_STATIC_DRAW);
+    // add coordinates
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), 0);
+    glEnableVertexAttribArray(0);
+    // add color
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), (void*)(sizeof(terrain_vertices[0].coords)));
+    glEnableVertexAttribArray(1);
+    // add normal
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), (void*)(sizeof(terrain_vertices[0].coords)+sizeof(terrain_vertices[0].color)));
+    glEnableVertexAttribArray(2);
+    // add shininess
+    glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), (void*)(sizeof(terrain_vertices[0].coords)+sizeof(terrain_vertices[0].color)+sizeof(terrain_vertices[0].normal)));
+    glEnableVertexAttribArray(3);
 
     glm_perspective(glm_rad(50.0f), (float)window_width / (float)window_height, 1.0f, MAX_VIEW_DISTANCE, projection_matrix);
 
