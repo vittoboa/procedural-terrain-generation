@@ -12,6 +12,9 @@
 // globals
 #define NUM_DIFFERENT_MAPS 5000
 #define MAX_VIEW_DISTANCE  400
+#define CAMERA_HEIGHT      15  // how much higher the camera is compared to the maximum height of the mountains
+static float angle_y = 0.0;  // angle to rotate scene
+float position_x = 0.0, position_y = -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, position_z = 0.0;  // player current position
 
 // light properties
 static const Light light0 =
@@ -53,7 +56,29 @@ void resize(int new_width, int new_height)
 
 void display(void)
 {
+    mat3 TMP;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // generate new model view matrix
+    glm_mat4_identity(model_view_matrix);
+    // rotate around the center at the player angle
+    glm_rotate(model_view_matrix, glm_rad(angle_y), (vec3){0.0, 1.0, 0.0});
+    // move to the player position
+    glm_translate(model_view_matrix, (vec3){position_x, 0.0, 0.0});
+    glm_translate(model_view_matrix, (vec3){0.0, position_y, 0.0});
+    glm_translate(model_view_matrix, (vec3){0.0, 0.0, position_z});
+    // update model view matrix
+    glUniformMatrix4fv(model_view_matrix_location, 1, GL_FALSE, (GLfloat *)model_view_matrix);
+
+    // calculate and update normal matrix
+    glm_mat4_pick3(model_view_matrix, TMP);
+    glm_mat3_inv(TMP, normal_matrix);
+    glm_mat3_transpose(normal_matrix);
+    glUniformMatrix3fv(normal_matrix_location, 1, GL_FALSE, (GLfloat *)normal_matrix);
+
+    // draw terrain
+    glMultiDrawElements(GL_TRIANGLE_STRIP, terrain_counts, GL_UNSIGNED_INT, (const void **)terrain_offsets, TERRAIN_NUM_VERTICES_SIDE - 1);
 
     // swap frame buffers
     glutSwapBuffers();
