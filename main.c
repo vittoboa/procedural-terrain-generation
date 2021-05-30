@@ -43,7 +43,7 @@ static mat3 normal_matrix     = GLM_MAT3_IDENTITY_INIT;
 
 // OpenGL global variables
 int seed;
-static unsigned int window_width = 1280, window_height = 720;
+static GLsizei window_width = 1280, window_height = 720;
 static GLint model_view_matrix_location, normal_matrix_location;
 
 // OpenGL window resize routine
