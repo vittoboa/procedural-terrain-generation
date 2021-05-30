@@ -16,21 +16,6 @@
 static float angle_y = 0.0;  // angle to rotate scene
 float position_x = 0.0, position_y = -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, position_z = 0.0;  // player current position
 
-// light properties
-static const Light light0 =
-{
-    (vec4){0.1, 0.1, 0.1, 1.0},
-    (vec4){0.9, 0.9, 0.9, 1.0},
-    (vec4){0.5, 0.5, 0.5, 1.0},
-    (vec4){10.0, 40.0, 10.0, 1.0}
-};
-
-// global ambient
-static const vec4 global_ambient = (vec4)
-{
-    0.2, 0.2, 0.2, 1.0
-};
-
 // terrain data
 static Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE];
 static unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X];
@@ -88,6 +73,18 @@ void init(void)
 {
     // VBO ids
     enum buffer {TERRAIN_VERTICES, TERRAIN_INDICES};
+
+    // light properties
+    const Light light0 =
+    {
+        {0.1, 0.1, 0.1, 1.0},
+        {0.9, 0.9, 0.9, 1.0},
+        {0.5, 0.5, 0.5, 1.0},
+        {10.0, 40.0, 10.0, 1.0}
+    };
+
+    // global ambient light
+    const vec4 global_ambient = {0.2, 0.2, 0.2, 1.0};
 
     // set background color
     glClearColor(0.53, 0.81, 0.92, 1.0f);
