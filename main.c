@@ -13,6 +13,7 @@
 #define NUM_DIFFERENT_MAPS 5000
 #define MAX_VIEW_DISTANCE  400
 #define CAMERA_HEIGHT      15  // how much higher the camera is compared to the maximum height of the mountains
+#define MOVEMENT_SPEED     2   // how quickly the player can move
 static float angle_y = 0.0;  // angle to rotate scene
 float position_x = 0.0, position_y = -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, position_z = 0.0;  // player current position
 
@@ -151,6 +152,44 @@ void init(void)
     glUniform4fv(glGetUniformLocation(program_id, "global_ambient"), 1, &global_ambient[0]);
 }
 
+// keyboard input processing routine
+void keyInput(unsigned char key, int x, int y)
+{
+    switch(key) {
+        case 27:
+            exit(0);
+        case 'W':  // move forward
+        case 'w': {
+            position_z += MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
+            position_x += MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
+            glutPostRedisplay();
+            break;
+        }
+        case 'S':  // move backward
+        case 's': {
+            position_z -= MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
+            position_x -= MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
+            glutPostRedisplay();
+            break;
+        }
+        case 'A':  // rotate left
+        case 'a': {
+            --angle_y;
+            glutPostRedisplay();
+            break;
+        }
+        case 'D':  // rotate right
+        case 'd': {
+            ++angle_y;
+            glutPostRedisplay();
+            break;
+        }
+        default: {
+             break;
+        }
+    }
+}
+
 int main(int argc, char* argv[])
 {
     glutInit(&argc, argv);
@@ -168,6 +207,7 @@ int main(int argc, char* argv[])
     glutCreateWindow("Infinite Procedural Terrain Generator");
     glutReshapeFunc(resize);
     glutDisplayFunc(display);
+    glutKeyboardFunc(keyInput);
 
     glewInit();
 
