@@ -2,6 +2,7 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include <cglm/cglm.h>
+#include <stdbool.h>
 #include <time.h>
 
 // application specific includes
@@ -11,10 +12,12 @@
 
 // globals
 #define NUM_DIFFERENT_MAPS 5000
-#define MAX_VIEW_DISTANCE  400
+#define MAX_VIEW_DISTANCE  350
+#define UPDATE_THRESHOLD   20  // distance between terrain updates
 #define CAMERA_HEIGHT      15  // how much higher the camera is compared to the maximum height of the mountains
 #define MOVEMENT_SPEED     2   // how quickly the player can move
 static float angle_y = 0.0;  // angle to rotate scene
+static float last_update_pos_x = 0.0, last_update_pos_z = 0.0;  // player position at the time of the last terrain update
 float position_x = 0.0, position_y = -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, position_z = 0.0;  // player current position
 
 // terrain data
@@ -43,6 +46,8 @@ void resize(int new_width, int new_height)
 void display(void)
 {
     mat3 TMP;
+    const bool should_update_x = abs((int)(position_x - last_update_pos_x)) >= UPDATE_THRESHOLD;
+    const bool should_update_z = abs((int)(position_z - last_update_pos_z)) >= UPDATE_THRESHOLD;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -65,6 +70,26 @@ void display(void)
 
     // draw terrain
     glMultiDrawElements(GL_TRIANGLE_STRIP, terrain_counts, GL_UNSIGNED_INT, (const void **)terrain_offsets, TERRAIN_NUM_VERTICES_SIDE - 1);
+
+    // update terrain
+    if (should_update_x || should_update_z) {
+        // determine number of chunks to generate on the x and z axis
+        const int num_chunks_x = round(((position_x - last_update_pos_x) / TERRAIN_CHUNK_SIZE));
+        const int num_chunks_z = round(((last_update_pos_z - position_z) / TERRAIN_CHUNK_SIZE));
+
+        // update the new terrain at the current location
+        update_terrain_vertices(num_chunks_x, num_chunks_z, terrain_vertices);
+
+        // update the vertices normals
+        update_terrain_normals(num_chunks_x, num_chunks_z, terrain_indices, terrain_vertices);
+
+        // update the vertices in the vbo
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(terrain_vertices), terrain_vertices);
+
+        // update variables to track user position at the time of the last update
+        last_update_pos_x = position_x;
+        last_update_pos_z = position_z;
+    }
 
     // swap frame buffers
     glutSwapBuffers();
