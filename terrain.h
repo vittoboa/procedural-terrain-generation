@@ -14,7 +14,7 @@
 #define TERRAIN_CHUNK_SIZE        2    // the size of each chunk, the distance between two vertices in the same axis
 #define TERRAIN_SIZE (TERRAIN_NUM_VERTICES_SIDE * TERRAIN_CHUNK_SIZE)  // total size of terrain grid
 
-extern float position_x, position_z;  // current player position
+extern vec3s position;  // current player position
 
 typedef struct {
     const vec4s color;

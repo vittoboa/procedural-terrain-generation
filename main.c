@@ -17,8 +17,8 @@
 #define CAMERA_HEIGHT      15  // how much higher the camera is compared to the maximum height of the mountains
 #define MOVEMENT_SPEED     2   // how quickly the player can move
 static float angle_y = 0.0;  // angle to rotate scene
-static float last_update_pos_x = 0.0, last_update_pos_z = 0.0;  // player position at the time of the last terrain update
-float position_x = 0.0, position_y = -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, position_z = 0.0;  // player current position
+static vec3s position_last_update = (vec3s){0.0};  // player position at the time of the last terrain update
+vec3s position = {0.0, -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, 0.0};  // player current position
 
 // terrain data
 static Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE];
@@ -46,8 +46,8 @@ void resize(int new_width, int new_height)
 void display(void)
 {
     mat3 TMP;
-    const bool should_update_x = abs((int)(position_x - last_update_pos_x)) >= UPDATE_THRESHOLD;
-    const bool should_update_z = abs((int)(position_z - last_update_pos_z)) >= UPDATE_THRESHOLD;
+    const bool should_update_x = abs((int)(position.x - position_last_update.x)) >= UPDATE_THRESHOLD;
+    const bool should_update_z = abs((int)(position.z - position_last_update.z)) >= UPDATE_THRESHOLD;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -56,9 +56,9 @@ void display(void)
     // rotate around the center at the player angle
     glm_rotate(model_view_matrix, glm_rad(angle_y), (vec3){0.0, 1.0, 0.0});
     // move to the player position
-    glm_translate(model_view_matrix, (vec3){position_x, 0.0, 0.0});
-    glm_translate(model_view_matrix, (vec3){0.0, position_y, 0.0});
-    glm_translate(model_view_matrix, (vec3){0.0, 0.0, position_z});
+    glm_translate(model_view_matrix, (vec3){position.x, 0.0, 0.0});
+    glm_translate(model_view_matrix, (vec3){0.0, position.y, 0.0});
+    glm_translate(model_view_matrix, (vec3){0.0, 0.0, position.z});
     // update model view matrix
     glUniformMatrix4fv(model_view_matrix_location, 1, GL_FALSE, (GLfloat *)model_view_matrix);
 
@@ -74,8 +74,8 @@ void display(void)
     // update terrain
     if (should_update_x || should_update_z) {
         // determine number of chunks to generate on the x and z axis
-        const int num_chunks_x = round(((position_x - last_update_pos_x) / TERRAIN_CHUNK_SIZE));
-        const int num_chunks_z = round(((last_update_pos_z - position_z) / TERRAIN_CHUNK_SIZE));
+        const int num_chunks_x = round(((position.x - position_last_update.x) / TERRAIN_CHUNK_SIZE));
+        const int num_chunks_z = round(((position_last_update.z - position.z) / TERRAIN_CHUNK_SIZE));
 
         // update the new terrain at the current location
         update_terrain_vertices(num_chunks_x, num_chunks_z, terrain_vertices);
@@ -87,8 +87,8 @@ void display(void)
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(terrain_vertices), terrain_vertices);
 
         // update variables to track user position at the time of the last update
-        last_update_pos_x = position_x;
-        last_update_pos_z = position_z;
+        position_last_update.x = position.x;
+        position_last_update.z = position.z;
     }
 
     // swap frame buffers
@@ -185,15 +185,15 @@ void keyInput(unsigned char key, int x, int y)
             exit(0);
         case 'W':  // move forward
         case 'w': {
-            position_z += MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
-            position_x += MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
+            position.z += MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
+            position.x += MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
             glutPostRedisplay();
             break;
         }
         case 'S':  // move backward
         case 's': {
-            position_z -= MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
-            position_x -= MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
+            position.z -= MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
+            position.x -= MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
             glutPostRedisplay();
             break;
         }

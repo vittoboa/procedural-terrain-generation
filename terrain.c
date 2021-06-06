@@ -51,7 +51,7 @@ static Vertex generate_vertex(const int x, const int z)
 static void fill_terrain_vertices(const int matrix_start_x, const int matrix_start_z, const int matrix_end_x, const int matrix_end_z,
                                   Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
-    const int world_start_x = position_x + (TERRAIN_SIZE / 2), world_start_z = position_z - (TERRAIN_SIZE / 2);
+    const int world_start_x = position.x + (TERRAIN_SIZE / 2), world_start_z = position.z - (TERRAIN_SIZE / 2);
     int world_curr_x, world_curr_z;
 
     // move along z axis
