@@ -16,10 +16,10 @@ static const TerrainType terrain_types[TERRAIN_NUM_TYPES] = {
 };
 
 // initialize a single vertex values given x and z coordinates
-static Vertex generate_vertex(const int x, const int z)
+static Vertex generate_vertex(const ivec3s pos)
 {
     // generate a height value between -TERRAIN_MAX_HEIGHT and TERRAIN_MAX_HEIGHT, with perlin noise
-    const float height = ((fractal_noise(x / TERRAIN_SCALE, z / TERRAIN_SCALE, 1, 5) * 2) - 1) * TERRAIN_MAX_HEIGHT;
+    const float height = ((fractal_noise(pos.x / TERRAIN_SCALE, pos.z / TERRAIN_SCALE, 1, 5) * 2) - 1) * TERRAIN_MAX_HEIGHT;
 
     // determine vertex color and shininess by the vertex height
     size_t terrain_type_i = 0;
@@ -32,9 +32,9 @@ static Vertex generate_vertex(const int x, const int z)
     // set vertex data
     const Vertex vertex = {
         .coords = {
-            .x = x,
+            .x = pos.x,
             .y = glm_max(height, TERRAIN_SEA_LEVEL),  // if the height is below sea level set it equal to it
-            .z = z,
+            .z = pos.z,
             .w = 1.0
         },
 
@@ -48,44 +48,44 @@ static Vertex generate_vertex(const int x, const int z)
 }
 
 // fill the terrain array of vertices
-static void fill_terrain_vertices(const int matrix_start_x, const int matrix_start_z, const int matrix_end_x, const int matrix_end_z,
+static void fill_terrain_vertices(const ivec3s matrix_start, const ivec3s matrix_end,
                                   Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
-    const int world_start_x = position.x + (TERRAIN_SIZE / 2), world_start_z = position.z - (TERRAIN_SIZE / 2);
-    int world_curr_x, world_curr_z;
+    const ivec3s world_start = { .x = position.x + (TERRAIN_SIZE / 2), .z = position.z - (TERRAIN_SIZE / 2) };
+    ivec3s world_curr;
 
     // move along z axis
-    for (size_t j = matrix_start_z; j < matrix_end_z; ++j) {
-        world_curr_z = - world_start_z - (j * TERRAIN_CHUNK_SIZE);
+    for (size_t j = matrix_start.z; j < matrix_end.z; ++j) {
+        world_curr.z = - world_start.z - (j * TERRAIN_CHUNK_SIZE);
 
         // move along x axis
-        for (size_t i = matrix_start_x; i < matrix_end_x; ++i) {
-            world_curr_x = - world_start_x + (i * TERRAIN_CHUNK_SIZE);
+        for (size_t i = matrix_start.x; i < matrix_end.x; ++i) {
+            world_curr.x = - world_start.x + (i * TERRAIN_CHUNK_SIZE);
 
-            terrain_vertices[(j * TERRAIN_NUM_VERTICES_SIDE) + i] = generate_vertex(world_curr_x, world_curr_z);
+            terrain_vertices[(j * TERRAIN_NUM_VERTICES_SIDE) + i] = generate_vertex(world_curr);
        }
     }
 }
 
 // update terrain vertices
-void update_terrain_vertices(const int num_chunks_x, const int num_chunks_z,
-                             Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
+void update_terrain_vertices(const ivec3s num_chunks, Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
-    const unsigned int diff_shift_x = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks_x), diff_shift_z = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks_z);
-    const int sign_x = copysignf(1.0, num_chunks_x), sign_z = copysignf(1.0, num_chunks_z);
-    const int shift_offset_z = (TERRAIN_NUM_VERTICES_SIDE * num_chunks_z);
-    int pos_current, pos_new, start_x, end_x, start_z, end_z;
+    const ivec3s sign = { .x = copysignf(1.0, num_chunks.x), .z = copysignf(1.0, num_chunks.z) };
+    const int shift_offset_z = (TERRAIN_NUM_VERTICES_SIDE * num_chunks.z);
+    ivec3s diff_shift = { .x = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks.x), .z = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks.z)};
+    ivec3s start, end;
+    int pos_current, pos_new;
 
     // determine variables values to shift on x
-    start_x = (num_chunks_x >= 0) ? (diff_shift_x - 1) : abs(num_chunks_x);
-    end_x = start_x - (diff_shift_x * sign_x);
+    start.x = (num_chunks.x >= 0) ? (diff_shift.x - 1) : abs(num_chunks.x);
+    end.x   = start.x - (diff_shift.x * sign.x);
 
     // determine variables values to shift on z
-    start_z = (num_chunks_z >= 0) ? (diff_shift_z - 1) : abs(num_chunks_z);
-    end_z = start_z - (diff_shift_z * sign_z);
+    start.z = (num_chunks.z >= 0) ? (diff_shift.z - 1) : abs(num_chunks.z);
+    end.z   = start.z - (diff_shift.z * sign.z);
 
     // shift columns
-    for (size_t j = start_z; j != end_z; j -= sign_z) {
+    for (size_t j = start.z; j != end.z; j -= sign.z) {
         for (size_t i = 0; i < TERRAIN_NUM_VERTICES_SIDE; ++i) {
             pos_current = (j * TERRAIN_NUM_VERTICES_SIDE) + i;
             pos_new = pos_current + shift_offset_z;
@@ -95,25 +95,27 @@ void update_terrain_vertices(const int num_chunks_x, const int num_chunks_z,
     }
     // shift rows
     for (size_t j = 0; j < TERRAIN_NUM_VERTICES_SIDE; ++j) {
-        for (size_t i = start_x; i != end_x; i -= sign_x) {
+        for (size_t i = start.x; i != end.x; i -= sign.x) {
             pos_current = (j * TERRAIN_NUM_VERTICES_SIDE) + i;
-            pos_new = pos_current + num_chunks_x;
+            pos_new = pos_current + num_chunks.x;
 
             terrain_vertices[pos_new] = terrain_vertices[pos_current];
         }
     }
 
     // generate new vertices on z
-    start_z = (num_chunks_z >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks_z;
-    end_z = start_z + abs(num_chunks_z);
-    fill_terrain_vertices(0, start_z, TERRAIN_NUM_VERTICES_SIDE, end_z, terrain_vertices);
+    start.x = 0;
+    end.x   = TERRAIN_NUM_VERTICES_SIDE;
+    start.z = (num_chunks.z >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks.z;
+    end.z   = start.z + abs(num_chunks.z);
+    fill_terrain_vertices(start, end, terrain_vertices);
 
     // generate new vertices on x
-    start_x = (num_chunks_x >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks_x;
-    end_x = start_x + abs(num_chunks_x);
-    start_z = end_z % TERRAIN_NUM_VERTICES_SIDE;
-    end_z = start_z + diff_shift_z;
-    fill_terrain_vertices(start_x, start_z, end_x, end_z, terrain_vertices);
+    start.x = (num_chunks.x >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks.x;
+    end.x   = start.x + abs(num_chunks.x);
+    start.z = end.z % TERRAIN_NUM_VERTICES_SIDE;
+    end.z   = start.z + diff_shift.z;
+    fill_terrain_vertices(start, end, terrain_vertices);
 }
 
 // fill the terrain array of indices
@@ -141,20 +143,20 @@ static void fill_terrain_indices(unsigned int terrain_indices[TERRAIN_NUM_VERTIC
 }
 
 // fill the terrain array of normals
-static void fill_terrain_normals(const int matrix_start_x, const int matrix_start_z, const int matrix_end_x, const int matrix_end_z,
+static void fill_terrain_normals(const ivec3s matrix_start, const ivec3s matrix_end,
                                  unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X],
                                  Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
     // convert from number of squares to number of indices
-    const int matrix_start_x_indices = matrix_start_x * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
-    const int matrix_end_x_indices   = matrix_end_x   * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
+    const int matrix_start_x_indices = matrix_start.x * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
+    const int matrix_end_x_indices   = matrix_end.x   * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
 
     int v1_index, v2_index, v3_index;
     Vertex v1, v2, v3;
     vec3s edge1, edge2, normal;
 
     // compute the normals of all vertices, one triangle at the time
-    for (size_t j = matrix_start_z; j < matrix_end_z - 1; ++j) {
+    for (size_t j = matrix_start.z; j < matrix_end.z - 1; ++j) {
         for (size_t i = matrix_start_x_indices; i < matrix_end_x_indices; ++i) {
             // get the indices of the triangle
             v1_index = terrain_indices[j][i];
@@ -181,29 +183,33 @@ static void fill_terrain_normals(const int matrix_start_x, const int matrix_star
     }
 
     // normalize the vertices normals
-    for (size_t j = matrix_start_z; j < matrix_end_z; ++j) {
-        for (size_t i = matrix_start_x; i < matrix_end_x; ++i) {
+    for (size_t j = matrix_start.z; j < matrix_end.z; ++j) {
+        for (size_t i = matrix_start.x; i < matrix_end.x; ++i) {
             glm_normalize(terrain_vertices[(j * TERRAIN_NUM_VERTICES_SIDE) + i].normal.raw);
         }
     }
 }
 
 // update the normals for the updated terrain
-void update_terrain_normals(const int num_chunks_x, const int num_chunks_z,
+void update_terrain_normals(const ivec3s num_chunks,
                             unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X],
                             Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
+    ivec3s start, end;
+
     // update normals on z
-    int start_z = (num_chunks_z >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks_z;
-    int end_z   = start_z + abs(num_chunks_z);
-    fill_terrain_normals(0, start_z, TERRAIN_NUM_VERTICES_SIDE, end_z, terrain_indices, terrain_vertices);
+    start.x = 0;
+    end.x   = TERRAIN_NUM_VERTICES_SIDE;
+    start.z = (num_chunks.z >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks.z;
+    end.z   = start.z + abs(num_chunks.z);
+    fill_terrain_normals(start, end, terrain_indices, terrain_vertices);
 
     // update normals on x
-    const int start_x = (num_chunks_x >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks_x;
-    const int end_x   = start_x + abs(num_chunks_x);
-    start_z = end_z % TERRAIN_NUM_VERTICES_SIDE;
-    end_z   = start_z + (TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks_z));
-    fill_terrain_normals(start_x, start_z, end_x, end_z, terrain_indices, terrain_vertices);
+    start.x = (num_chunks.x >= 0) ? 0 : TERRAIN_NUM_VERTICES_SIDE + num_chunks.x;
+    end.x   = start.x + abs(num_chunks.x);
+    start.z = end.z % TERRAIN_NUM_VERTICES_SIDE;
+    end.z   = start.z + (TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks.z));
+    fill_terrain_normals(start, end, terrain_indices, terrain_vertices);
 }
 
 // fill the terrain array of counts
@@ -228,9 +234,13 @@ void init_terrain(Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NU
                   int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1],
                   void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1])
 {
-    fill_terrain_vertices(0, 0, TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE, terrain_vertices);
+    fill_terrain_vertices((ivec3s) {0, 0, 0},
+                          (ivec3s) {TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE},
+                          terrain_vertices);
     fill_terrain_indices(terrain_indices);
-    fill_terrain_normals(0, 0, TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE, terrain_indices, terrain_vertices); // needs to always be after filling terrain vertices and indices
+    fill_terrain_normals((ivec3s) {0, 0, 0},
+                         (ivec3s) {TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE, TERRAIN_NUM_VERTICES_SIDE},
+                         terrain_indices, terrain_vertices); // needs to always be after filling terrain vertices and indices
     fill_terrain_counts(terrain_counts);
     fill_terrain_offsets(terrain_offsets);
 }

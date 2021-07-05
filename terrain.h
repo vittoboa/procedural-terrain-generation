@@ -27,10 +27,9 @@ void init_terrain(Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NU
                   int terrain_counts[TERRAIN_NUM_VERTICES_SIDE - 1],
                   void* terrain_offsets[TERRAIN_NUM_VERTICES_SIDE - 1]);
 
-void update_terrain_vertices(const int num_chunks_x, const int num_chunks_z,
-                             Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE]);
+void update_terrain_vertices(const ivec3s num_chunks, Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE]);
 
-void update_terrain_normals(const int num_chunks_x, const int num_chunks_z,
+void update_terrain_normals(const ivec3s num_chunks,
                             unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X],
                             Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE]);
 

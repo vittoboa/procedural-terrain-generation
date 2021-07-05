@@ -74,14 +74,14 @@ void display(void)
     // update terrain
     if (should_update_x || should_update_z) {
         // determine number of chunks to generate on the x and z axis
-        const int num_chunks_x = round(((position.x - position_last_update.x) / TERRAIN_CHUNK_SIZE));
-        const int num_chunks_z = round(((position_last_update.z - position.z) / TERRAIN_CHUNK_SIZE));
+        const ivec3s num_chunks = { .x = round(((position.x - position_last_update.x) / TERRAIN_CHUNK_SIZE)),
+                                    .z = round(((position_last_update.z - position.z) / TERRAIN_CHUNK_SIZE)) };
 
         // update the new terrain at the current location
-        update_terrain_vertices(num_chunks_x, num_chunks_z, terrain_vertices);
+        update_terrain_vertices(num_chunks, terrain_vertices);
 
         // update the vertices normals
-        update_terrain_normals(num_chunks_x, num_chunks_z, terrain_indices, terrain_vertices);
+        update_terrain_normals(num_chunks, terrain_indices, terrain_vertices);
 
         // update the vertices in the vbo
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(terrain_vertices), terrain_vertices);
