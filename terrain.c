@@ -33,7 +33,7 @@ static Vertex generate_vertex(const ivec3s pos)
     const Vertex vertex = {
         .coords = {
             .x = pos.x,
-            .y = glm_max(height, TERRAIN_SEA_LEVEL),  // if the height is below sea level set it equal to it
+            .y = glm_max(height, TERRAIN_SEA_LEVEL),  // if the height is below sea level set it equals to it
             .z = pos.z,
             .w = 1.0
         },
@@ -52,17 +52,13 @@ static void fill_terrain_vertices(const ivec3s matrix_start, const ivec3s matrix
                                   Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
     const ivec3s world_start = { .x = position.x + (TERRAIN_SIZE / 2), .z = position.z - (TERRAIN_SIZE / 2) };
-    ivec3s world_curr;
 
-    // move along z axis
     for (size_t j = matrix_start.z; j < matrix_end.z; ++j) {
-        world_curr.z = - world_start.z - (j * TERRAIN_CHUNK_SIZE);
-
-        // move along x axis
         for (size_t i = matrix_start.x; i < matrix_end.x; ++i) {
-            world_curr.x = - world_start.x + (i * TERRAIN_CHUNK_SIZE);
+            const ivec3s world_pos = { .x = - world_start.x + (i * TERRAIN_CHUNK_SIZE),
+                                       .z = - world_start.z - (j * TERRAIN_CHUNK_SIZE) };
 
-            terrain_vertices[(j * TERRAIN_NUM_VERTICES_SIDE) + i] = generate_vertex(world_curr);
+            terrain_vertices[(j * TERRAIN_NUM_VERTICES_SIDE) + i] = generate_vertex(world_pos);
        }
     }
 }
@@ -70,11 +66,9 @@ static void fill_terrain_vertices(const ivec3s matrix_start, const ivec3s matrix
 // update terrain vertices
 void update_terrain_vertices(const ivec3s num_chunks, Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
-    const ivec3s sign = { .x = copysignf(1.0, num_chunks.x), .z = copysignf(1.0, num_chunks.z) };
-    const int shift_offset_z = (TERRAIN_NUM_VERTICES_SIDE * num_chunks.z);
-    ivec3s diff_shift = { .x = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks.x), .z = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks.z)};
+    const ivec3s sign = { .x = glm_sign(num_chunks.x), .z = glm_sign(num_chunks.z) };
+    const ivec3s diff_shift = { .x = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks.x), .z = TERRAIN_NUM_VERTICES_SIDE - abs(num_chunks.z)};
     ivec3s start, end;
-    int pos_current, pos_new;
 
     // determine variables values to shift on x
     start.x = (num_chunks.x >= 0) ? (diff_shift.x - 1) : abs(num_chunks.x);
@@ -87,8 +81,8 @@ void update_terrain_vertices(const ivec3s num_chunks, Vertex terrain_vertices[TE
     // shift columns
     for (size_t j = start.z; j != end.z; j -= sign.z) {
         for (size_t i = 0; i < TERRAIN_NUM_VERTICES_SIDE; ++i) {
-            pos_current = (j * TERRAIN_NUM_VERTICES_SIDE) + i;
-            pos_new = pos_current + shift_offset_z;
+            const size_t pos_current = (j * TERRAIN_NUM_VERTICES_SIDE) + i;
+            const size_t pos_new     = pos_current + (TERRAIN_NUM_VERTICES_SIDE * num_chunks.z);
 
             terrain_vertices[pos_new] = terrain_vertices[pos_current];
         }
@@ -96,8 +90,8 @@ void update_terrain_vertices(const ivec3s num_chunks, Vertex terrain_vertices[TE
     // shift rows
     for (size_t j = 0; j < TERRAIN_NUM_VERTICES_SIDE; ++j) {
         for (size_t i = start.x; i != end.x; i -= sign.x) {
-            pos_current = (j * TERRAIN_NUM_VERTICES_SIDE) + i;
-            pos_new = pos_current + num_chunks.x;
+            const size_t pos_current = (j * TERRAIN_NUM_VERTICES_SIDE) + i;
+            const size_t pos_new     = pos_current + num_chunks.x;
 
             terrain_vertices[pos_new] = terrain_vertices[pos_current];
         }
@@ -121,9 +115,8 @@ void update_terrain_vertices(const ivec3s num_chunks, Vertex terrain_vertices[TE
 // fill the terrain array of indices
 static void fill_terrain_indices(unsigned int terrain_indices[TERRAIN_NUM_VERTICES_SIDE - 1][TERRAIN_NUM_INDICES_X])
 {
-    int current_pos;
     for (size_t j = 0; j < TERRAIN_NUM_VERTICES_SIDE - 1; ++j) {
-        current_pos = j * TERRAIN_NUM_VERTICES_SIDE;
+        int current_pos = j * TERRAIN_NUM_VERTICES_SIDE;
 
         // compute the indices of all vertices, two triangles at the time
         for (size_t i = 0; i < TERRAIN_NUM_INDICES_X; i += 6) {
@@ -148,25 +141,23 @@ static void fill_terrain_normals(const ivec3s matrix_start, const ivec3s matrix_
                                  Vertex terrain_vertices[TERRAIN_NUM_VERTICES_SIDE * TERRAIN_NUM_VERTICES_SIDE])
 {
     // convert from number of squares to number of indices
-    const int matrix_start_x_indices = matrix_start.x * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
-    const int matrix_end_x_indices   = matrix_end.x   * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
-
-    int v1_index, v2_index, v3_index;
-    Vertex v1, v2, v3;
-    vec3s edge1, edge2, normal;
+    const size_t matrix_start_x_indices = matrix_start.x * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
+    const size_t matrix_end_x_indices   = matrix_end.x   * NUM_TRIANGLES_IN_SQUARE * NUM_VERTICES_IN_TRIANGLE;
 
     // compute the normals of all vertices, one triangle at the time
     for (size_t j = matrix_start.z; j < matrix_end.z - 1; ++j) {
         for (size_t i = matrix_start_x_indices; i < matrix_end_x_indices; ++i) {
+            vec3s edge1, edge2, normal;
+
             // get the indices of the triangle
-            v1_index = terrain_indices[j][i];
-            v2_index = terrain_indices[j][i + 1];
-            v3_index = terrain_indices[j][i + 2];
+            const size_t v1_index = terrain_indices[j][i    ];
+            const size_t v2_index = terrain_indices[j][i + 1];
+            const size_t v3_index = terrain_indices[j][i + 2];
 
             // get the vertices of the triangle
-            v1 = terrain_vertices[v1_index];
-            v2 = terrain_vertices[v2_index];
-            v3 = terrain_vertices[v3_index];
+            Vertex v1 = terrain_vertices[v1_index];
+            Vertex v2 = terrain_vertices[v2_index];
+            Vertex v3 = terrain_vertices[v3_index];
 
             // get the vectors of two edges of the triangle
             glm_vec3_sub(v2.coords.raw, v1.coords.raw, edge1.raw);
