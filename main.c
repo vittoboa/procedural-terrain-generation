@@ -54,11 +54,9 @@ void display(void)
     // generate new model view matrix
     glm_mat4_identity(model_view_matrix);
     // rotate around the center at the player angle
-    glm_rotate(model_view_matrix, glm_rad(angle_y), (vec3){0.0, 1.0, 0.0});
+    glm_rotate_y(model_view_matrix, glm_rad(angle_y), model_view_matrix);
     // move to the player position
-    glm_translate(model_view_matrix, (vec3){position.x, 0.0, 0.0});
-    glm_translate(model_view_matrix, (vec3){0.0, position.y, 0.0});
-    glm_translate(model_view_matrix, (vec3){0.0, 0.0, position.z});
+    glm_translate(model_view_matrix, position.raw);
     // update model view matrix
     glUniformMatrix4fv(model_view_matrix_location, 1, GL_FALSE, (GLfloat *)model_view_matrix);
 
@@ -87,8 +85,7 @@ void display(void)
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(terrain_vertices), terrain_vertices);
 
         // update variables to track user position at the time of the last update
-        position_last_update.x = position.x;
-        position_last_update.z = position.z;
+        glm_vec3_copy(position.raw, position_last_update.raw);
     }
 
     // swap frame buffers
