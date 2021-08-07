@@ -16,7 +16,7 @@
 #define UPDATE_THRESHOLD   20  // distance between terrain updates
 #define CAMERA_HEIGHT      15  // how much higher the camera is compared to the maximum height of the mountains
 #define MOVEMENT_SPEED     2   // how quickly the player can move
-static float angle_y = 0.0;  // angle to rotate scene
+static float angle_rad_y = 0.0;  // angle to rotate scene
 static vec3s position_last_update = (vec3s){0.0};  // player position at the time of the last terrain update
 vec3s position = {0.0, -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, 0.0};  // player current position
 
@@ -54,7 +54,7 @@ void display(void)
     // generate new model view matrix
     glm_mat4_identity(model_view_matrix);
     // rotate around the center at the player angle
-    glm_rotate_y(model_view_matrix, glm_rad(angle_y), model_view_matrix);
+    glm_rotate_y(model_view_matrix, angle_rad_y, model_view_matrix);
     // move to the player position
     glm_translate(model_view_matrix, position.raw);
     // update model view matrix
@@ -182,27 +182,27 @@ void keyInput(unsigned char key, int x, int y)
             exit(0);
         case 'W':  // move forward
         case 'w': {
-            position.z += MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
-            position.x += MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
+            position.z += MOVEMENT_SPEED * sin(angle_rad_y + GLM_PI_2);
+            position.x += MOVEMENT_SPEED * cos(angle_rad_y + GLM_PI_2);
             glutPostRedisplay();
             break;
         }
         case 'S':  // move backward
         case 's': {
-            position.z -= MOVEMENT_SPEED * sin(glm_rad(angle_y + 90));
-            position.x -= MOVEMENT_SPEED * cos(glm_rad(angle_y + 90));
+            position.z -= MOVEMENT_SPEED * sin(angle_rad_y + GLM_PI_2);
+            position.x -= MOVEMENT_SPEED * cos(angle_rad_y + GLM_PI_2);
             glutPostRedisplay();
             break;
         }
         case 'A':  // rotate left
         case 'a': {
-            --angle_y;
+            angle_rad_y -= glm_rad(1);
             glutPostRedisplay();
             break;
         }
         case 'D':  // rotate right
         case 'd': {
-            ++angle_y;
+            angle_rad_y += glm_rad(1);
             glutPostRedisplay();
             break;
         }
