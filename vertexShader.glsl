@@ -22,24 +22,21 @@ uniform Light light0;
 
 uniform vec4 global_ambient;
 
-vec3 normal, light_direction, eye_direction, view_direction, halfway;
-vec4 ambient, diffuse, specular;
-
 void main(void)
 {
    // object normal
-   normal = normalize(normal_matrix * terrain_normal);
+   vec3 normal = normalize(normal_matrix * terrain_normal);
    // light direction
-   light_direction = normalize(vec3(light0.coords));
+   vec3 light_direction = normalize(vec3(light0.coords));
    // view direction
-   eye_direction  = -1.0f * normalize(vec3(model_view_matrix * terrain_coordinates));
-   view_direction = light_direction + eye_direction;
-   halfway = (length(view_direction) == 0.0f) ? vec3(0.0) : ((view_direction) / length(view_direction));
+   vec3 eye_direction  = -1.0f * normalize(vec3(model_view_matrix * terrain_coordinates));
+   vec3 view_direction = light_direction + eye_direction;
+   vec3 halfway = (length(view_direction) == 0.0f) ? vec3(0.0) : ((view_direction) / length(view_direction));
 
    // lighting components
-   ambient  = global_ambient + light0.ambient_colors;
-   diffuse  = max(dot(normal, light_direction), 0.0f) * light0.diffuse_colors;
-   specular = pow(max(dot(normal, halfway), 0.0f), terrain_shininess) * light0.specular_colors;
+   vec4 ambient  = global_ambient + light0.ambient_colors;
+   vec4 diffuse  = max(dot(normal, light_direction), 0.0f) * light0.diffuse_colors;
+   vec4 specular = pow(max(dot(normal, halfway), 0.0f), terrain_shininess) * light0.specular_colors;
 
    // determine final color
    color = (ambient + diffuse + specular) * terrain_color;
