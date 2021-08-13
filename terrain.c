@@ -32,13 +32,13 @@ static Vertex generate_vertex(const ivec3s pos)
     // set vertex data
     const Vertex vertex = {
         .coords = {
-            .x = pos.x,
-            .y = glm_max(height, TERRAIN_SEA_LEVEL),  // if the height is below sea level set it equals to it
-            .z = pos.z,
-            .w = 1.0
+            pos.x,
+            glm_max(height, TERRAIN_SEA_LEVEL),  // if the height is below sea level set it equals to it
+            pos.z,
+            1.0
         },
 
-        .normal = (vec3s){0},
+        .normal = {0, 0, 0},
 
         .color     = terrain_types[terrain_type_i].color,
         .shininess = terrain_types[terrain_type_i].shininess
@@ -147,7 +147,7 @@ static void fill_terrain_normals(const ivec3s matrix_start, const ivec3s matrix_
     // compute the normals of all vertices, one triangle at the time
     for (size_t j = matrix_start.z; j < matrix_end.z - 1; ++j) {
         for (size_t i = matrix_start_x_indices; i < matrix_end_x_indices; ++i) {
-            vec3s edge1, edge2, normal;
+            vec3 edge1, edge2, normal;
 
             // get the indices of the triangle
             const size_t v1_index = terrain_indices[j][i    ];
@@ -160,23 +160,23 @@ static void fill_terrain_normals(const ivec3s matrix_start, const ivec3s matrix_
             Vertex v3 = terrain_vertices[v3_index];
 
             // get the vectors of two edges of the triangle
-            glm_vec3_sub(v2.coords.raw, v1.coords.raw, edge1.raw);
-            glm_vec3_sub(v3.coords.raw, v1.coords.raw, edge2.raw);
+            glm_vec3_sub(v2.coords, v1.coords, edge1);
+            glm_vec3_sub(v3.coords, v1.coords, edge2);
 
             // compute the normal
-            glm_vec3_cross(edge1.raw, edge2.raw, normal.raw);
+            glm_vec3_cross(edge1, edge2, normal);
 
             // update the normal for all vertices
-            glm_vec3_add(normal.raw, v1.normal.raw, terrain_vertices[v1_index].normal.raw);
-            glm_vec3_add(normal.raw, v2.normal.raw, terrain_vertices[v2_index].normal.raw);
-            glm_vec3_add(normal.raw, v3.normal.raw, terrain_vertices[v3_index].normal.raw);
+            glm_vec3_add(normal, v1.normal, terrain_vertices[v1_index].normal);
+            glm_vec3_add(normal, v2.normal, terrain_vertices[v2_index].normal);
+            glm_vec3_add(normal, v3.normal, terrain_vertices[v3_index].normal);
         }
     }
 
     // normalize the vertices normals
     for (size_t j = matrix_start.z; j < matrix_end.z; ++j) {
         for (size_t i = matrix_start.x; i < matrix_end.x; ++i) {
-            glm_normalize(terrain_vertices[(j * TERRAIN_NUM_VERTICES_SIDE) + i].normal.raw);
+            glm_normalize(terrain_vertices[(j * TERRAIN_NUM_VERTICES_SIDE) + i].normal);
         }
     }
 }
