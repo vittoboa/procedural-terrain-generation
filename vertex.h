@@ -4,8 +4,8 @@
 #include <cglm/types-struct.h>
 
 typedef struct Vertex {
-    vec4 coords;
-    vec4s color;
+    vec3 coords;
+    vec3s color;
     vec3 normal;
     float shininess;
 } Vertex;

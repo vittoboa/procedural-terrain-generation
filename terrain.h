@@ -17,7 +17,7 @@
 extern vec3s position;  // current player position
 
 typedef struct {
-    const vec4s color;
+    const vec3s color;
     const float shininess;
     const float height;
 } TerrainType;

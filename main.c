@@ -142,10 +142,10 @@ void init(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer[TERRAIN_INDICES]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(terrain_indices), terrain_indices, GL_STATIC_DRAW);
     // add coordinates
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), 0);
     glEnableVertexAttribArray(0);
     // add color
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), (void*)(sizeof(terrain_vertices[0].coords)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), (void*)(sizeof(terrain_vertices[0].coords)));
     glEnableVertexAttribArray(1);
     // add normal
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), (void*)(sizeof(terrain_vertices[0].coords)+sizeof(terrain_vertices[0].color)));
