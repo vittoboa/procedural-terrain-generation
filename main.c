@@ -11,8 +11,8 @@
 #include "light.h"
 
 // globals
-#define UPDATE_THRESHOLD   20  // distance between terrain updates
 #define CAMERA_HEIGHT      15  // how much higher the camera is compared to the maximum height of the mountains
+#define UPDATE_THRESHOLD   5   // distance between terrain updates
 #define MOVEMENT_SPEED     2   // how quickly the player can move
 static float angle_rad_y = 0.0;  // angle to rotate scene
 vec3s position = {0.0, -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, 0.0};  // player current position
@@ -42,11 +42,6 @@ void resize(int new_width, int new_height)
 
 void display(void)
 {
-    mat3 TMP;
-    static vec3s position_last_update;  // player position at the time of the last terrain update
-    const bool should_update_x = abs((int)(position.x - position_last_update.x)) >= UPDATE_THRESHOLD;
-    const bool should_update_z = abs((int)(position.z - position_last_update.z)) >= UPDATE_THRESHOLD;
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // generate new model view matrix
@@ -58,32 +53,62 @@ void display(void)
     // update model view matrix
     glUniformMatrix4fv(model_view_matrix_location, 1, GL_FALSE, (GLfloat *)model_view_matrix);
 
-    // calculate and update normal matrix
+    /* Update normal matrix */
+    mat3 TMP;
     glm_mat4_pick3(model_view_matrix, TMP);
     glm_mat3_inv(TMP, normal_matrix);
     glm_mat3_transpose(normal_matrix);
     glUniformMatrix3fv(normal_matrix_location, 1, GL_FALSE, (GLfloat *)normal_matrix);
 
-    // draw terrain
+    /* Draw terrain */
     glMultiDrawElements(GL_TRIANGLE_STRIP, terrain_counts, GL_UNSIGNED_INT, (const void **)terrain_offsets, TERRAIN_NUM_VERTICES_SIDE - 1);
 
-    // update terrain
-    if (should_update_x || should_update_z) {
-        // determine number of chunks to generate on the x and z axis
-        const ivec3s num_chunks = { .x = round(((position.x - position_last_update.x) / TERRAIN_CHUNK_SIZE)),
-                                    .z = round(((position_last_update.z - position.z) / TERRAIN_CHUNK_SIZE)) };
+    /* Update terrain */
+    static enum update_steps { POSITION, VERTICES, NORMALS, VBO } step;
+    static vec3s position_last_update;  // player position at the time of the last terrain update
+    const bool should_update_x = abs((int)(position.x - position_last_update.x)) >= UPDATE_THRESHOLD;
+    const bool should_update_z = abs((int)(position.z - position_last_update.z)) >= UPDATE_THRESHOLD;
 
-        // update the new terrain at the current location
-        update_terrain_vertices(num_chunks, terrain_vertices);
+    if (step || should_update_x || should_update_z) {
+        static ivec3s num_chunks;  // number of chunks to update
 
-        // update the vertices normals
-        update_terrain_normals(num_chunks, terrain_indices, terrain_vertices);
+        switch (step) {
+            case POSITION: {
+                // determine number of chunks to generate on the x and z axis
+                num_chunks = (ivec3s) { .x = round(((position.x - position_last_update.x) / TERRAIN_CHUNK_SIZE)),
+                                        .z = round(((position_last_update.z - position.z) / TERRAIN_CHUNK_SIZE)) };
 
-        // update the vertices in the vbo
-        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(terrain_vertices), terrain_vertices);
+                // update variable to track user position at the time of the last update
+                glm_vec3_copy(position.raw, position_last_update.raw);
 
-        // update variables to track user position at the time of the last update
-        glm_vec3_copy(position.raw, position_last_update.raw);
+                ++step;
+                break;
+            }
+            case VERTICES: {
+                // update the new terrain at the current location
+                update_terrain_vertices(num_chunks, terrain_vertices);
+
+                ++step;
+                break;
+            }
+            case NORMALS: {
+                // update the vertices normals
+                update_terrain_normals(num_chunks, terrain_indices, terrain_vertices);
+
+                ++step;
+                break;
+            }
+            case VBO: {
+                // update the vertices in the vbo
+                glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(terrain_vertices), terrain_vertices);
+
+                step = 0;
+                break;
+            }
+            default: {
+                break;
+            }
+        }
     }
 
     // swap frame buffers
