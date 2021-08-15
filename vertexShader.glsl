@@ -40,7 +40,6 @@ void main(void)
 
    // determine final color
    color = (ambient + diffuse + specular) * terrain_color;
-   color = vec4(vec3(min(color, vec4(1.0))), 1.0);
 
    gl_Position = projection_matrix * model_view_matrix * terrain_coordinates;
 }
