@@ -11,13 +11,10 @@
 #include "light.h"
 
 // globals
-#define NUM_DIFFERENT_MAPS 5000
-#define MAX_VIEW_DISTANCE  350
 #define UPDATE_THRESHOLD   20  // distance between terrain updates
 #define CAMERA_HEIGHT      15  // how much higher the camera is compared to the maximum height of the mountains
 #define MOVEMENT_SPEED     2   // how quickly the player can move
 static float angle_rad_y = 0.0;  // angle to rotate scene
-static vec3s position_last_update = (vec3s){0.0};  // player position at the time of the last terrain update
 vec3s position = {0.0, -TERRAIN_MAX_HEIGHT - CAMERA_HEIGHT, 0.0};  // player current position
 
 // terrain data
@@ -46,6 +43,7 @@ void resize(int new_width, int new_height)
 void display(void)
 {
     mat3 TMP;
+    static vec3s position_last_update;  // player position at the time of the last terrain update
     const bool should_update_x = abs((int)(position.x - position_last_update.x)) >= UPDATE_THRESHOLD;
     const bool should_update_z = abs((int)(position.z - position_last_update.z)) >= UPDATE_THRESHOLD;
 
@@ -154,7 +152,7 @@ void init(void)
     glVertexAttribPointer(3, 1, GL_FLOAT, GL_FALSE, sizeof(terrain_vertices[0]), (void*)(sizeof(terrain_vertices[0].coords)+sizeof(terrain_vertices[0].color)+sizeof(terrain_vertices[0].normal)));
     glEnableVertexAttribArray(3);
 
-    glm_perspective(glm_rad(50.0f), (float)window_width / (float)window_height, 1.0f, MAX_VIEW_DISTANCE, projection_matrix);
+    glm_perspective(glm_rad(50.0f), (float)window_width / window_height, 1.0f, 600.0f, projection_matrix);
 
     // obtain matrices locations
     const GLint projection_matrix_location = glGetUniformLocation(program_id, "projection_matrix");
@@ -233,8 +231,10 @@ int main(int argc, char* argv[])
 
     glewInit();
 
+    // set the seed which determines the map to generate
     srand(time(NULL));
-    seed = rand() % NUM_DIFFERENT_MAPS;
+    const int num_different_maps = 5000;
+    seed = rand() % num_different_maps;
 
     init();
     glutMainLoop();
