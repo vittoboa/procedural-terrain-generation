@@ -2,6 +2,8 @@
 3D procedural terrain generation in OpenGL. It features camera movement and biomes.
 The terrain height and biome is determined using a perlin noise algorithm.
 
+![example](https://user-images.githubusercontent.com/38300176/185486889-d1ca82e6-643e-46b7-918d-cd6edeaaefdb.png)
+
 ## Built with
 This project uses the following software:
 - OpenGL
